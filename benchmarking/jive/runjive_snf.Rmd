@@ -1,0 +1,130 @@
+---
+title: "compile_jive_results"
+author: "Amrit Singh"
+date: '2017-12-22'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+WhereAmI <- "~/Dropbox/Manuscript/diablo_datasets/benchmarking/"
+
+## load libraries
+library(r.jive)
+library(tidyverse)
+
+## load data
+load(paste0(WhereAmI, "SNFdatasets.RDATA"))
+
+```
+
+# JIVE
+
+## Colon
+Estimating  joint and individual ranks via permutation...
+Running JIVE algorithm for ranks:
+joint rank: 5 , individual ranks: 20 12 11 
+JIVE algorithm converged after  485  iterations.
+Re-estimating  joint and individual ranks via permutation...
+Running JIVE algorithm for ranks:
+joint rank: 5 , individual ranks: 25 17 20 
+JIVE algorithm converged after  194  iterations.
+Re-estimating  joint and individual ranks via permutation...
+Running JIVE algorithm for ranks:
+joint rank: 5 , individual ranks: 25 18 19 
+JIVE algorithm converged after  162  iterations.
+Re-estimating  joint and individual ranks via permutation...
+Running JIVE algorithm for ranks:
+joint rank: 5 , individual ranks: 25 18 20 
+JIVE algorithm converged after  265  iterations.
+Re-estimating  joint and individual ranks via permutation...
+Final joint rank: 5 , final individual ranks: 25 18 20 
+    user   system  elapsed 
+3399.332  109.718 3516.703
+
+```{r}
+system.time(jive_colon <- jive(lapply(snf_data$colon, t)))
+saveRDS(jive_colon, paste0(WhereAmI, "jive/jive_colon.rds"))
+jive_colon <- readRDS(paste0(WhereAmI, "jive/jive_colon.rds"))
+```
+
+## Kidney
+Estimating  joint and individual ranks via permutation...
+Running JIVE algorithm for ranks:
+joint rank: 8 , individual ranks: 22 14 21 
+JIVE algorithm converged after  265  iterations.
+Re-estimating  joint and individual ranks via permutation...
+Running JIVE algorithm for ranks:
+joint rank: 8 , individual ranks: 26 22 33 
+JIVE algorithm converged after  246  iterations.
+Re-estimating  joint and individual ranks via permutation...
+Running JIVE algorithm for ranks:
+joint rank: 8 , individual ranks: 26 21 33 
+JIVE algorithm converged after  381  iterations.
+Re-estimating  joint and individual ranks via permutation...
+Final joint rank: 8 , final individual ranks: 26 21 33 
+    user   system  elapsed 
+3133.940  116.240 3256.706
+
+```{r}
+system.time(jive_kidney <- jive(lapply(snf_data$kidney, t)))
+saveRDS(jive_kidney, paste0(WhereAmI, "jive/jive_kidney.rds"))
+jive_kidney <- readRDS(paste0(WhereAmI, "jive/jive_kidney.rds"))
+```
+
+## GBM
+Estimating  joint and individual ranks via permutation...
+Running JIVE algorithm for ranks:
+joint rank: 7 , individual ranks: 23 18 16 
+JIVE algorithm converged after  430  iterations.
+Re-estimating  joint and individual ranks via permutation...
+Running JIVE algorithm for ranks:
+joint rank: 7 , individual ranks: 25 22 29 
+JIVE algorithm did not converge after  1000  iterations.
+Re-estimating  joint and individual ranks via permutation...
+Running JIVE algorithm for ranks:
+joint rank: 7 , individual ranks: 25 23 30 
+JIVE algorithm did not converge after  1000  iterations.
+Re-estimating  joint and individual ranks via permutation...
+Running JIVE algorithm for ranks:
+joint rank: 7 , individual ranks: 25 23 29 
+JIVE algorithm did not converge after  1000  iterations.
+Re-estimating  joint and individual ranks via permutation...
+Final joint rank: 7 , final individual ranks: 25 23 29 
+    user   system  elapsed 
+9412.532  120.756 9535.102 
+
+```{r}
+system.time(jive_gbm <- jive(lapply(snf_data$gbm, t)))
+saveRDS(jive_gbm, paste0(WhereAmI, "jive/jive_gbm.rds"))
+jive_gbm <- readRDS(paste0(WhereAmI, "jive/jive_gbm.rds"))
+```
+
+## Lung
+Estimating  joint and individual ranks via permutation...
+Running JIVE algorithm for ranks:
+joint rank: 4 , individual ranks: 23 15 13 
+JIVE algorithm converged after  117  iterations.
+Re-estimating  joint and individual ranks via permutation...
+Running JIVE algorithm for ranks:
+joint rank: 4 , individual ranks: 27 22 25 
+JIVE algorithm converged after  127  iterations.
+Re-estimating  joint and individual ranks via permutation...
+Final joint rank: 4 , final individual ranks: 27 22 25 
+    user   system  elapsed 
+ 946.377   56.279 1003.182
+ 
+```{r}
+system.time(jive_lung <- jive(lapply(snf_data$lung, t)))
+saveRDS(jive_lung, paste0(WhereAmI, "jive/jive_lung.rds"))
+jive_lung <- readRDS(paste0(WhereAmI, "jive/jive_lung.rds"))
+```
+
+# save objects to RDATA file
+
+```{r}
+save(jive_colon=jive_colon, jive_kidney=jive_kidney, jive_gbm=jive_gbm, jive_lung=jive_lung,
+  file = paste0(WhereAmI, "jive/jive_SNFdatasets.RDATA"))
+```
+

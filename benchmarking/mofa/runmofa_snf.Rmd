@@ -1,0 +1,129 @@
+---
+title: "compile_mofa_models"
+author: "Amrit Singh"
+date: '2017-12-22'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, cache = TRUE)
+
+WhereAmI <- "~/Dropbox/Manuscript/diablo_datasets/benchmarking/"
+
+# load libraries
+library(MOFAtools); 
+library(MultiAssayExperiment);
+
+## load data
+load(paste0(WhereAmI, "SNFdatasets.RDATA"))
+```
+
+# JIVE
+
+## Colon
+
+```{r}
+write.table(snf_data$colon$mrna, sep = "\t", paste0(WhereAmI, "mofa/colon_datasets/colon_mrna.txt"))
+write.table(snf_data$colon$mirna, sep = "\t", paste0(WhereAmI, "mofa/colon_datasets/colon_mirna.txt"))
+write.table(snf_data$colon$cpg, sep = "\t", paste0(WhereAmI, "mofa/colon_datasets/colon_cpg.txt"))
+
+ExpList <- lapply(snf_data$colon, t)
+map <- data.frame(
+  primary = colnames(ExpList$mrna),
+  colname = colnames(ExpList$mrna),
+  stringsAsFactors = FALSE
+)
+mylist <- list(mrna = map, mirna = map, cpg = map)
+mySampleMap <- listToMap(mylist)
+
+# Create MultiAssayExperiment object 
+df <- data.frame(pheno = snf_group$colon,
+                 row.names = names(snf_group$colon))
+mae_colon <- MultiAssayExperiment(experiments = ExpList, colData = df, sampleMap = mySampleMap)
+MOFA_colon <- createMOFAobject(mae_colon)
+MOFA_colon <- loadModel(paste0(WhereAmI, "mofa/colonMOFA.hdf5"), MOFA_colon)
+plotTilesData(MOFA_colon)
+```
+
+## Kidney
+
+```{r}
+write.table(snf_data$kidney$mrna, sep = "\t", paste0(WhereAmI, "mofa/kidney_datasets/kidney_mrna.txt"))
+write.table(snf_data$kidney$mirna, sep = "\t", paste0(WhereAmI, "mofa/kidney_datasets/kidney_mirna.txt"))
+write.table(snf_data$kidney$cpg, sep = "\t", paste0(WhereAmI, "mofa/kidney_datasets/kidney_cpg.txt"))
+
+ExpList <- lapply(snf_data$kidney, t)
+map <- data.frame(
+  primary = colnames(ExpList$mrna),
+  colname = colnames(ExpList$mrna),
+  stringsAsFactors = FALSE
+)
+mylist <- list(mrna = map, mirna = map, cpg = map)
+mySampleMap <- listToMap(mylist)
+
+# Create MultiAssayExperiment object 
+df <- data.frame(pheno = snf_group$kidney,
+                 row.names = names(snf_group$kidney))
+mae_kidney <- MultiAssayExperiment(experiments = ExpList, colData = df, sampleMap = mySampleMap)
+MOFA_kidney <- createMOFAobject(mae_kidney)
+MOFA_kidney <- loadModel(paste0(WhereAmI, "mofa/kidneyMOFA.hdf5"), MOFA_kidney)
+plotTilesData(MOFA_kidney)
+```
+
+## GBM
+
+```{r}
+write.table(snf_data$gbm$mrna, sep = "\t", paste0(WhereAmI, "mofa/gbm_datasets/gbm_mrna.txt"))
+write.table(snf_data$gbm$mirna, sep = "\t", paste0(WhereAmI, "mofa/gbm_datasets/gbm_mirna.txt"))
+write.table(snf_data$gbm$cpg, sep = "\t", paste0(WhereAmI, "mofa/gbm_datasets/gbm_cpg.txt"))
+
+ExpList <- lapply(snf_data$gbm, t)
+map <- data.frame(
+  primary = colnames(ExpList$mrna),
+  colname = colnames(ExpList$mrna),
+  stringsAsFactors = FALSE
+)
+mylist <- list(mrna = map, mirna = map, cpg = map)
+mySampleMap <- listToMap(mylist)
+
+# Create MultiAssayExperiment object 
+df <- data.frame(pheno = snf_group$gbm,
+                 row.names = names(snf_group$gbm))
+mae_gbm <- MultiAssayExperiment(experiments = ExpList, colData = df, sampleMap = mySampleMap)
+MOFA_gbm <- createMOFAobject(mae_gbm)
+MOFA_gbm <- loadModel(paste0(WhereAmI, "mofa/gbmMOFA.hdf5"), MOFA_gbm)
+plotTilesData(MOFA_gbm)
+```
+
+## Lung
+
+```{r}
+write.table(snf_data$lung$mrna, sep = "\t", paste0(WhereAmI, "mofa/lung_datasets/lung_mrna.txt"))
+write.table(snf_data$lung$mirna, sep = "\t", paste0(WhereAmI, "mofa/lung_datasets/lung_mirna.txt"))
+write.table(snf_data$lung$cpg, sep = "\t", paste0(WhereAmI, "mofa/lung_datasets/lung_cpg.txt"))
+
+ExpList <- lapply(snf_data$lung, t)
+map <- data.frame(
+  primary = colnames(ExpList$mrna),
+  colname = colnames(ExpList$mrna),
+  stringsAsFactors = FALSE
+)
+mylist <- list(mrna = map, mirna = map, cpg = map)
+mySampleMap <- listToMap(mylist)
+
+# Create MultiAssayExperiment object 
+df <- data.frame(pheno = snf_group$lung,
+                 row.names = names(snf_group$lung))
+mae_lung <- MultiAssayExperiment(experiments = ExpList, colData = df, sampleMap = mySampleMap)
+MOFA_lung <- createMOFAobject(mae_lung)
+MOFA_lung <- loadModel(paste0(WhereAmI, "mofa/lungMOFA.hdf5"), MOFA_lung)
+plotTilesData(MOFA_lung)
+```
+
+# save objects to RDATA file
+
+```{r}
+save(MOFA_colon=MOFA_colon, MOFA_kidney=MOFA_kidney, MOFA_gbm=MOFA_gbm, MOFA_lung=MOFA_lung,
+  file = paste0(WhereAmI, "mofa/mofa_SNFdatasets.RDATA"))
+```
+

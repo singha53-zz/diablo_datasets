@@ -1,0 +1,269 @@
+---
+title: "SNF_dataPrep"
+author: "Amrit Singh"
+date: '2017-08-20'
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+WhereAmI <- "~/Dropbox/Manuscript/diablo_datasets/benchmarking/"
+
+## load libraries
+library(amritr)
+library(mixOmics);
+library(tidyverse);
+```
+
+# import SNF datasets
+## Colon
+
+```{r}
+colon.group0 <- read.delim(paste0(WhereAmI, "Colon/COLON_Survival.txt"), row.names = 1)
+table(colon.group0$Death)
+colon.group <- rep(NA, nrow(colon.group0))
+colon.group[colon.group0$Survival <= median(colon.group0$Survival)] <- "low"
+colon.group[colon.group0$Survival > median(colon.group0$Survival)] <- "high"
+table(colon.group)
+names(colon.group) <- unlist(lapply(strsplit(rownames(colon.group0), "-"), function(i) i[3]))
+
+# mRNA
+colon.mrna0 <- read.delim(paste0(WhereAmI, "Colon/COLON_Gene_Expression.txt"))
+colnames(colon.mrna0) <- c(colnames(colon.mrna0)[-1], NA)
+colon.mrna <- as.matrix(na.omit(colon.mrna0[, -ncol(colon.mrna0)]))
+colnames(colon.mrna) <- unlist(lapply(strsplit(colnames(colon.mrna), "\\."), function(i) i[3]))
+rownames(colon.mrna) <- paste("mrna", rownames(colon.mrna), sep = "_")
+# miRNA
+colon.mirna0 <- read.delim(paste0(WhereAmI, "Colon/COLON_Mirna_Expression.txt"))
+colnames(colon.mirna0) <- c(colnames(colon.mirna0)[-1], NA)
+colon.mirna <- as.matrix(na.omit(colon.mirna0[, -ncol(colon.mirna0)]))
+colnames(colon.mirna) <- unlist(lapply(strsplit(colnames(colon.mirna), "\\."), function(i) i[3]))
+rownames(colon.mirna) <- paste("mirna", rownames(colon.mirna), sep = "_")
+# Methylation
+colon.cpg <- read.delim(paste0(WhereAmI, "Colon/COLON_Methy_Expression.txt"), row.names = NULL)
+colnames(colon.cpg) <- c(colnames(colon.cpg)[-2], NA)
+rownames(colon.cpg) <- paste("cpg", colon.cpg$row.names, 1:nrow(colon.cpg), sep = "_")
+colon.cpg <- as.matrix(colon.cpg[, -c(1, ncol(colon.cpg))])
+colnames(colon.cpg) <- unlist(lapply(strsplit(colnames(colon.cpg), "\\."), function(i) i[3]))
+## check ordering
+all(names(colon.group) == colnames(colon.mrna))
+all(names(colon.group) == colnames(colon.mirna))
+all(names(colon.group) == colnames(colon.cpg))
+
+## check to see if there are no NAs
+sum(is.na(colon.mrna)); sum(is.na(colon.mirna)); sum(is.na(colon.cpg));
+```
+
+### dataDistribution-Colon
+
+```{r}
+par(mfrow = c(1, 3))
+hist(colon.mrna); hist(colon.mirna); hist(colon.cpg)
+
+```
+
+## Kidney
+
+```{r}
+kidney.group0 <- read.delim(paste0(WhereAmI, "Kidney/KIDNEY_Survival.txt"), row.names = 1)
+kidney.group <- rep(NA, nrow(kidney.group0))
+names(kidney.group) <- unlist(lapply(strsplit(rownames(kidney.group0), "-"), function(i) i[3]))
+kidney.group[kidney.group0$Survival <= median(kidney.group0$Survival)] <- "low"
+kidney.group[kidney.group0$Survival > median(kidney.group0$Survival)] <- "high"
+table(kidney.group)
+
+## mRNA
+kidney.mrna0 <- read.delim(paste0(WhereAmI, "Kidney/KIDNEY_Gene_Expression.txt"), row.names = 1) %>% 
+                mutate(Gene = unlist(lapply(strsplit(rownames(.), "LLL"), function(i) i[1]))) %>% group_by(Gene) %>% 
+  dplyr::summarise_all(funs(mean))
+kidney.mrna <- as.matrix(kidney.mrna0[, -1])
+rownames(kidney.mrna) <- as.character(kidney.mrna0$Gene)
+colnames(kidney.mrna) <- c(colnames(kidney.mrna)[-1], NA)
+kidney.mrna <- as.matrix(kidney.mrna[, colSums(is.na(kidney.mrna)) == 0])
+colnames(kidney.mrna) <- unlist(lapply(strsplit(colnames(kidney.mrna), "\\."), function(i) i[3]))
+rownames(kidney.mrna) <- paste("mrna", rownames(kidney.mrna), sep = "_")
+# miRNA
+kidney.mirna0 <- read.delim(paste0(WhereAmI, "Kidney/KIDNEY_Mirna_Expression.txt"), row.names = 1)
+kidney.mirna <- as.matrix(kidney.mirna0[, colSums(is.na(kidney.mirna0)) == 0])
+colnames(kidney.mirna) <- unlist(lapply(strsplit(colnames(kidney.mirna0)[-1], "\\."), function(i) i[3]))
+rownames(kidney.mirna) <- paste("mirna", rownames(kidney.mirna), sep = "_")
+## CpGs
+kidney.cpg <- read.delim(paste0(WhereAmI, "Kidney/KIDNEY_Methy_Expression.txt"), row.names = 1)
+colnames(kidney.cpg) <- unlist(lapply(strsplit(colnames(kidney.cpg)[-1], "\\."), function(i) i[3]))
+kidney.cpg <- as.matrix(kidney.cpg[, -ncol(kidney.cpg)])
+rownames(kidney.cpg) <- sapply(strsplit(rownames(kidney.cpg), " "), function(i) paste(c("cpg", rev(i)), collapse="_"))
+
+dim(kidney.mrna); dim(kidney.mirna); dim(kidney.cpg); 
+table(kidney.group); length(kidney.group)
+all(names(kidney.group) == colnames(kidney.mrna))
+all(names(kidney.group) == colnames(kidney.mirna))
+all(names(kidney.group) == colnames(kidney.cpg))
+
+## check to see if there are no NAs
+sum(is.na(kidney.mrna)); sum(is.na(kidney.mirna)); sum(is.na(kidney.cpg));
+```
+
+### dataDistribution-Kidney
+
+```{r}
+par(mfrow = c(1, 3))
+hist(kidney.mrna); hist(kidney.mirna); hist(kidney.cpg)
+
+```
+
+## GBM
+
+```{r}
+gbm.group0 <- read.delim(paste0(WhereAmI, "GBM/GLIO_Survival.txt"))
+gbm.group <- rep(NA, nrow(gbm.group0))
+names(gbm.group) <- gsub("-", ".", as.character(gbm.group0$PatientID))
+names(gbm.group) <- unlist(lapply(strsplit(as.character(gbm.group0$PatientID), "-"), function(i) i[3]))
+gbm.group[gbm.group0$Survival <= median(gbm.group0$Survival)] <- "low"
+gbm.group[gbm.group0$Survival > median(gbm.group0$Survival)] <- "high"
+table(gbm.group)
+
+## remove doubles
+which(names(gbm.group) %in% names(table(names(gbm.group)))[table(names(gbm.group)) > 1])
+names(gbm.group)[which(names(gbm.group) %in% names(table(names(gbm.group)))[table(names(gbm.group)) > 1])]
+-c(52,80)
+
+## mRNA
+gbm.mrna0 <- read.delim(paste0(WhereAmI, "GBM/GLIO_Gene_Expression.txt"), row.names = 1)
+colnames(gbm.mrna0) <- c(colnames(gbm.mrna0)[-1], NA)
+gbm.mrna <- as.matrix(na.omit(gbm.mrna0[, -ncol(gbm.mrna0)]))
+colnames(gbm.mrna) <- unlist(lapply(strsplit(colnames(gbm.mrna), "\\."), function(i) i[3]))
+rownames(gbm.mrna) <- paste("mrna", rownames(gbm.mrna), sep = "_")
+# miRNA
+gbm.mirna0 <- read.delim(paste0(WhereAmI, "GBM/GLIO_Mirna_Expression.txt"))
+colnames(gbm.mirna0) <- c(colnames(gbm.mirna0)[-1], NA)
+gbm.mirna <- as.matrix(na.omit(gbm.mirna0[, -ncol(gbm.mirna0)]))
+colnames(gbm.mirna) <- unlist(lapply(strsplit(colnames(gbm.mirna), "\\."), function(i) i[3]))
+rownames(gbm.mirna) <- paste("mirna", rownames(gbm.mirna), sep = "_")
+# Methylation
+gbm.cpg <- read.delim(paste0(WhereAmI, "GBM/GLIO_Methy_Expression.txt"), row.names = 1)
+colnames(gbm.cpg) <- c(colnames(gbm.cpg)[-1], NA)
+gbm.cpg <- as.matrix(gbm.cpg[,-ncol(gbm.cpg)])
+colnames(gbm.cpg) <- unlist(lapply(strsplit(colnames(gbm.cpg), "\\."), function(i) i[3]))
+rownames(gbm.cpg) <- paste("cpg", rownames(gbm.cpg), sep="_")
+
+
+## remove duplicates samples
+gbm.group <- gbm.group[-c(52,80)]
+gbm.mrna <- gbm.mrna[, -c(52,80)]
+gbm.mirna <- gbm.mirna[, -c(52,80)]
+gbm.cpg <- gbm.cpg[, -c(52,80)]
+
+all(names(gbm.group) == colnames(gbm.mrna))
+all(names(gbm.group) == colnames(gbm.mirna))
+all(names(gbm.group) == colnames(gbm.cpg))
+
+## check to see if there are no NAs
+sum(is.na(gbm.mrna)); sum(is.na(gbm.mirna)); sum(is.na(gbm.cpg));
+```
+
+### dataDistribution-GBM
+
+```{r}
+par(mfrow = c(1, 3))
+hist(gbm.mrna); hist(gbm.mirna); hist(gbm.cpg)
+
+```
+
+# Lung
+
+```{r}
+lung.group0 <- read.delim(paste0(WhereAmI, "Lung/LUNG_Survival.txt"), row.names = 1)
+lung.group <- rep(NA, nrow(lung.group0))
+lung.group[lung.group0$Survival <= median(lung.group0$Survival)] <- "low"
+lung.group[lung.group0$Survival > median(lung.group0$Survival)] <- "high"
+table(lung.group)
+names(lung.group) <- unlist(lapply(strsplit(rownames(lung.group0), "-"), function(i) i[3]))
+
+## mRNA
+lung.mrna0 <- read.delim(paste0(WhereAmI, "Lung/LUNG_Gene_Expression.txt"), row.names = 1)
+lung.mrna <- as.matrix(lung.mrna0[, colSums(is.na(lung.mrna0)) == 0])
+colnames(lung.mrna) <- unlist(lapply(strsplit(colnames(lung.mrna0)[-1], "\\."), function(i) i[3]))
+rownames(lung.mrna) <- paste("mrna", rownames(lung.mrna), sep = "_")
+# miRNA
+lung.mirna0 <- read.delim(paste0(WhereAmI, "Lung/LUNG_Mirna_Expression.txt"), row.names = 1)
+lung.mirna <- as.matrix(lung.mirna0[, colSums(is.na(lung.mirna0)) == 0])
+colnames(lung.mirna) <- unlist(lapply(strsplit(colnames(lung.mirna0)[-1], "\\."), function(i) i[3]))
+rownames(lung.mirna) <- paste("mirna", rownames(lung.mirna), sep = "_")
+## CpGs
+lung.cpg0 <- read.delim(paste0(WhereAmI, "Lung/LUNG_Methy_Expression.txt"), row.names = 1)
+lung.cpg <- as.matrix(lung.cpg0[, colSums(is.na(lung.cpg0)) == 0])
+colnames(lung.cpg) <- unlist(lapply(strsplit(colnames(lung.cpg0)[-1], "\\."), function(i) i[3]))
+
+library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+ann <- getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+rownames(lung.cpg) <- paste("cpg", unlist(lapply(ann[rownames(lung.cpg), "UCSC_RefGene_Name"], function(i){
+  paste(unique(unlist(strsplit(as.character(i), ";"))), collapse = ";")
+})), rownames(lung.cpg), sep = "_")
+nrow(lung.cpg)
+
+dim(lung.mrna); dim(lung.mirna); dim(lung.cpg); 
+table(lung.group); length(lung.group)
+all(names(lung.group) == colnames(lung.mrna))
+all(names(lung.group) == colnames(lung.mirna))
+all(names(lung.group) == colnames(lung.cpg))
+
+## check to see if there are no NAs
+sum(is.na(lung.mrna)); sum(is.na(lung.mirna)); sum(is.na(lung.cpg));
+```
+
+### dataDistribution-Lung
+
+```{r}
+par(mfrow = c(1, 3))
+hist(lung.mrna); hist(lung.mirna); hist(lung.cpg)
+
+```
+
+## Compare survival times
+
+```{r}
+survivalDat <- data.frame(survival_times=c(colon.group0$Survival,kidney.group0$Survival,gbm.group0$Survival[-c(52,80)],lung.group0$Survival),
+  group=factor(rep(c("colon","kidney","gbm","lung"), c(length(colon.group), length(kidney.group), length(gbm.group), length(lung.group))), levels=c("kidney","lung","gbm","colon")),
+  survival=c(colon.group, kidney.group, gbm.group, lung.group))
+
+survivalDat_summary <- survivalDat %>% 
+  group_by(group, survival) %>% 
+  summarise(survival_times = 4000, n = paste("n", n(), sep="="))
+survivalDat_summary$survival_times[seq(2,nrow(survivalDat_summary),2)] <- -100
+
+pdf(paste0(WhereAmI, "label_generation.pdf"), width = 6, height = 4)
+ggplot(survivalDat, aes(x=group, y=survival_times, color=survival, fill=survival)) +
+  geom_boxplot() +
+  customTheme(sizeStripFont = 15, xAngle = 0, hjust = 0.5, vjust = 0.5, 
+    xSize = 10, ySize = 10, xAxisSize = 10, yAxisSize = 10) +
+  ylab("Survival times (days)") +
+  xlab("Cancer datasets") +
+  geom_text(data = survivalDat_summary, aes(x=group, y=survival_times, label = n), position=position_dodge(width=0.7))
+dev.off()
+ 
+```
+
+
+## save datasets to rdata file
+
+```{r}
+snf_data = list(colon = list(mrna = t(colon.mrna), mirna = t(colon.mirna), cpg = t(colon.cpg)),
+                    kidney = list(mrna = t(kidney.mrna), mirna = t(kidney.mirna), cpg = t(kidney.cpg)),
+                    gbm = list(mrna = t(gbm.mrna), mirna = t(gbm.mirna), cpg = t(gbm.cpg)),
+                    lung = list(mrna = t(lung.mrna), mirna = t(lung.mirna), cpg = t(lung.cpg)))
+snf_group = list(colon = colon.group,
+                    kidney = kidney.group,
+                    gbm = gbm.group,
+                    lung = lung.group)
+
+save(snf_data=snf_data, snf_group=snf_group,
+     file = paste0(WhereAmI, "SNFdatasets.RDATA"))
+
+```
+
+
