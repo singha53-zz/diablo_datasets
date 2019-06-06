@@ -1,0 +1,7 @@
+"","modName","CpGs","miRNA","mRNA"
+"1","DIABLO_Null",22,42,60
+"2","DIABLO_Full",17,17,55
+"3","Concatenation_sPLSDA",NA,NA,60
+"4","Ensemble_sPLSDA",40,55,60
+"5","Concatenation_Enet",38,2,118
+"6","Ensemble_Enet",127,45,96
